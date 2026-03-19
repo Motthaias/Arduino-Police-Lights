@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPLL ATC Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-plane-arrival"></i>
+            <h1>RPLL Manila ATC Monitor</h1>
+        </div>
+        <div class="status-bar">
+            <span class="status-item"><i class="fa-solid fa-clock"></i> <span id="current-time"></span> UTC</span>
+            <span class="status-item"><i class="fa-solid fa-location-dot"></i> Ninoy Aquino Int'l</span>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="panel map-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-map"></i> Active Map Monitoring</h2>
+                <div class="panel-actions">
+                    <a href="https://www.flightaware.com/live/airport/RPLL" target="_blank" title="Open in FlightAware"><i class="fa-solid fa-up-right-from-square"></i></a>
+                </div>
+            </div>
+            <div class="panel-content">
+                <iframe src="https://embed.flightaware.com/commercial/integrated/web/delay_map_fullpage.rvt?airport=RPLL" frameborder="0"></iframe>
+            </div>
+        </section>
+
+        <section class="panel radio-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-tower-broadcast"></i> Radio Conversation</h2>
+                <div class="panel-actions">
+                    <a href="https://www.liveatc.net/hlisten.php?mount=rpll&icao=rpll" target="_blank" title="Open in LiveATC"><i class="fa-solid fa-up-right-from-square"></i></a>
+                </div>
+            </div>
+            <div class="panel-content radio-content">
+                <div class="stream-info">
+                    <p>Live feed from RPLL Tower/Ground</p>
+                    <div class="controls">
+                        <a href="https://www.liveatc.net/hlisten.php?mount=rpll&icao=rpll" target="_blank" class="btn">
+                            <i class="fa-solid fa-play"></i> Open Radio Feed
+                        </a>
+                    </div>
+                    <p class="note">Note: LiveATC feeds may require opening in a separate window due to security restrictions.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Data provided by <a href="https://www.flightaware.com" target="_blank">FlightAware</a> and <a href="https://www.liveatc.net" target="_blank">LiveATC</a></p>
+    </footer>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const utc = now.toISOString().split('T')[1].split('.')[0];
+            document.getElementById('current-time').textContent = utc;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+</html>
