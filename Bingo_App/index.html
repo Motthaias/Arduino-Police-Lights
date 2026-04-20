@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Draw Application</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .current-draw-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            border: 2px solid #3498db;
+        }
+
+        .current-ball {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #e74c3c;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .last-5 {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            height: 40px;
+        }
+
+        .mini-ball {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #95a5a6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: transform 0.1s, background-color 0.2s;
+            margin: 0 10px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #draw-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        #draw-btn:hover {
+            background-color: #27ae60;
+        }
+
+        #draw-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        #reset-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .header-row {
+            display: grid;
+            grid-template-columns: 50px 1fr;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+
+        .letter-label {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #34495e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .numbers-row {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 4px;
+        }
+
+        .number-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-weight: 500;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .number-cell.drawn {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+            font-weight: bold;
+        }
+
+        /* Specific layout for Bingo Board rows */
+        .bingo-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .bingo-letter {
+            width: 40px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2c3e50;
+            margin-right: 10px;
+        }
+
+        .bingo-numbers {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .bingo-numbers {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            .bingo-row {
+                flex-direction: column;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+            }
+            .bingo-letter {
+                width: 100%;
+                margin-bottom: 5px;
+                background-color: #eee;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bingo Draw</h1>
+
+    <div class="container">
+        <div class="current-draw-container">
+            <div>Current Number</div>
+            <div id="current-ball" class="current-ball">--</div>
+        </div>
+
+        <div class="last-5">
+            <!-- Last 5 numbers will appear here -->
+        </div>
+
+        <div class="controls">
+            <button id="draw-btn">Draw Number</button>
+            <button id="reset-btn">Reset Game</button>
+        </div>
+
+        <div id="board-container">
+            <!-- Board generated by JS -->
+        </div>
+    </div>
+
+    <script>
+        const letters = ['B', 'I', 'N', 'G', 'O'];
+        const totalNumbers = 75;
+        let drawnNumbers = new Set();
+        let drawHistory = [];
+
+        // Define ranges for each letter
+        const ranges = {
+            'B': {min: 1, max: 15},
+            'I': {min: 16, max: 30},
+            'N': {min: 31, max: 45},
+            'G': {min: 46, max: 60},
+            'O': {min: 61, max: 75}
+        };
+
+        const currentBallEl = document.getElementById('current-ball');
+        const drawBtn = document.getElementById('draw-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const boardContainer = document.getElementById('board-container');
+        const last5Container = document.querySelector('.last-5');
+
+        function initBoard() {
+            boardContainer.innerHTML = '';
+
+            letters.forEach(letter => {
+                const row = document.createElement('div');
+                row.className = 'bingo-row';
+
+                const letterEl = document.createElement('div');
+                letterEl.className = 'bingo-letter';
+                letterEl.textContent = letter;
+                row.appendChild(letterEl);
+
+                const numbersContainer = document.createElement('div');
+                numbersContainer.className = 'bingo-numbers';
+
+                const range = ranges[letter];
+                for (let i = range.min; i <= range.max; i++) {
+                    const numCell = document.createElement('div');
+                    numCell.className = 'number-cell';
+                    numCell.id = `cell-${i}`;
+                    numCell.textContent = i;
+                    numbersContainer.appendChild(numCell);
+                }
+
+                row.appendChild(numbersContainer);
+                boardContainer.appendChild(row);
+            });
+        }
+
+        function getLetterForNumber(num) {
+            if (num <= 15) return 'B';
+            if (num <= 30) return 'I';
+            if (num <= 45) return 'N';
+            if (num <= 60) return 'G';
+            return 'O';
+        }
+
+        function updateHistory() {
+            last5Container.innerHTML = '';
+            // Show last 5, excluding the current one (which is history[history.length-1])
+            // Actually usually "Last 5" implies previous draws.
+            // Let's show the previous 5 draws (excluding current).
+
+            const previous = drawHistory.slice(0, -1).slice(-5).reverse();
+
+            previous.forEach(num => {
+                const ball = document.createElement('div');
+                ball.className = 'mini-ball';
+                ball.textContent = num;
+                ball.title = `${getLetterForNumber(num)}-${num}`;
+                last5Container.appendChild(ball);
+            });
+        }
+
+        function drawNumber() {
+            if (drawnNumbers.size >= totalNumbers) {
+                alert("All numbers have been drawn!");
+                drawBtn.disabled = true;
+                return;
+            }
+
+            let num;
+            do {
+                num = Math.floor(Math.random() * totalNumbers) + 1;
+            } while (drawnNumbers.has(num));
+
+            drawnNumbers.add(num);
+            drawHistory.push(num);
+
+            const letter = getLetterForNumber(num);
+            const displayString = `${letter}-${num}`;
+
+            // Animate effect
+            currentBallEl.style.opacity = 0;
+            setTimeout(() => {
+                currentBallEl.textContent = displayString;
+                currentBallEl.style.opacity = 1;
+
+                // Highlight on board
+                const cell = document.getElementById(`cell-${num}`);
+                if (cell) {
+                    cell.classList.add('drawn');
+                }
+
+                updateHistory();
+            }, 100);
+
+            if (drawnNumbers.size >= totalNumbers) {
+                drawBtn.disabled = true;
+                drawBtn.textContent = "Game Over";
+            }
+        }
+
+        function resetGame() {
+            if (confirm("Are you sure you want to reset the game?")) {
+                drawnNumbers.clear();
+                drawHistory = [];
+                currentBallEl.textContent = "--";
+                drawBtn.disabled = false;
+                drawBtn.textContent = "Draw Number";
+
+                // Clear board highlights
+                document.querySelectorAll('.number-cell').forEach(cell => {
+                    cell.classList.remove('drawn');
+                });
+
+                updateHistory();
+            }
+        }
+
+        // Event Listeners
+        drawBtn.addEventListener('click', drawNumber);
+        resetBtn.addEventListener('click', resetGame);
+
+        // Initialize
+        initBoard();
+
+    </script>
+</body>
+</html>
